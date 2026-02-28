@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Modern Tic Tac Toe</title>
+
+<style>
+body{
+    margin:0;
+    height:100vh;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    background:linear-gradient(135deg,#667eea,#764ba2);
+    font-family:'Segoe UI',sans-serif;
+}
+
+.container{
+    background:rgba(255,255,255,0.15);
+    backdrop-filter:blur(15px);
+    padding:30px;
+    border-radius:20px;
+    text-align:center;
+    color:white;
+    box-shadow:0 10px 25px rgba(0,0,0,0.3);
+}
+
+h1{margin-bottom:10px;}
+
+.scoreboard{
+    display:flex;
+    justify-content:space-around;
+    margin-bottom:15px;
+    font-weight:bold;
+}
+
+.board{
+    display:grid;
+    grid-template-columns:repeat(3,90px);
+    gap:8px;
+    justify-content:center;
+    margin:20px 0;
+}
+
+.cell{
+    width:90px;
+    height:90px;
+    background:white;
+    border-radius:15px;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    font-size:40px;
+    font-weight:bold;
+    cursor:pointer;
+    transition:0.3s;
+}
+
+.cell:hover{
+    transform:scale(1.05);
+}
+
+.winner{
+    background:#00c853 !important;
+    color:white;
+}
+
+button{
+    padding:8px 15px;
+    border:none;
+    border-radius:8px;
+    cursor:pointer;
+    font-size:15px;
+}
+button:hover{
+    background:#ddd;
+}
+</style>
+</head>
+<body>
+
+<div class="container">
+    <h1>Tic Tac Toe</h1>
+    <div class="scoreboard">
+        <div>Player: <span id="playerScore">0</span></div>
+        <div>Computer: <span id="computerScore">0</span></div>
+    </div>
+    <div id="status">Your Turn</div>
+    <div class="board" id="board"></div>
+    <button onclick="restartGame()">Restart</button>
+</div>
+
+<script>
+const board=document.getElementById("board");
+const statusText=document.getElementById("status");
+const playerScoreText=document.getElementById("playerScore");
+const computerScoreText=document.getElementById("computerScore");
+
+let cells=["","","","","","","","",""];
+let gameActive=true;
+
+let playerScore=localStorage.getItem("playerScore")||0;
+let computerScore=localStorage.getItem("computerScore")||0;
+
+playerScoreText.textContent=playerScore;
+computerScoreText.textContent=computerScore;
+
+const winningCombinations=[
+[0,1,2],[3,4,5],[6,7,8],
+[0,3,6],[1,4,7],[2,5,8],
+[0,4,8],[2,4,6]
+];
+
+function createBoard(){
+    board.innerHTML="";
+    cells.forEach((cell,index)=>{
+        const cellDiv=document.createElement("div");
+        cellDiv.classList.add("cell");
+        cellDiv.dataset.index=index;
+        cellDiv.addEventListener("click",playerMove);
+        board.appendChild(cellDiv);
+    });
+}
+
+function playerMove(e){
+    const index=e.target.dataset.index;
+    if(cells[index]!=="" || !gameActive) return;
+
+    makeMove(index,"X");
+
+    if(gameActive){
+        setTimeout(computerMove,500);
+    }
+}
+
+function computerMove(){
+    let emptyCells=cells.map((v,i)=>v===""?i:null).filter(v=>v!==null);
+    let randomIndex=emptyCells[Math.floor(Math.random()*emptyCells.length)];
+    makeMove(randomIndex,"O");
+}
+
+function makeMove(index,player){
+    cells[index]=player;
+    document.querySelectorAll(".cell")[index].textContent=player;
+
+    if(checkWinner(player)){
+        statusText.textContent=(player==="X"?"You Win!":"Computer Wins!");
+        gameActive=false;
+
+        if(player==="X"){
+            playerScore++;
+            localStorage.setItem("playerScore",playerScore);
+            playerScoreText.textContent=playerScore;
+        }else{
+            computerScore++;
+            localStorage.setItem("computerScore",computerScore);
+            computerScoreText.textContent=computerScore;
+        }
+        return;
+    }
+
+    if(!cells.includes("")){
+        statusText.textContent="Draw!";
+        gameActive=false;
+        return;
+    }
+
+    statusText.textContent=(player==="X")?"Computer Turn":"Your Turn";
+}
+
+function checkWinner(player){
+    return winningCombinations.some(combination=>{
+        const [a,b,c]=combination;
+        if(cells[a]===player && cells[b]===player && cells[c]===player){
+            document.querySelectorAll(".cell")[a].classList.add("winner");
+            document.querySelectorAll(".cell")[b].classList.add("winner");
+            document.querySelectorAll(".cell")[c].classList.add("winner");
+            return true;
+        }
+        return false;
+    });
+}
+
+function restartGame(){
+    cells=["","","","","","","","",""];
+    gameActive=true;
+    statusText.textContent="Your Turn";
+    createBoard();
+}
+
+createBoard();
+</script>
+
+</body>
+</html>
